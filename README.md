@@ -9,47 +9,47 @@
 
 ## Phase 1 — Object Storage
 
-### Screenshot 1A
+### Screenshot 1a
 ![](screenshots/1A.png)
 
-### Screenshot 1B
+### Screenshot 1b
 ![](screenshots/1B.png)
 
 ---
 
 ## Phase 2 — Tree Objects
 
-### Screenshot 2A
+### Screenshot 2a
 ![](screenshots/2A.png)
 
-### Screenshot 2B
+### Screenshot 2b
 ![](screenshots/2B.png)
 
 ---
 
 ## Phase 3 — Index / Staging Area
 
-### Screenshot 3A
+### Screenshot 3a
 ![](screenshots/3A.png)
 
-### Screenshot 3B
+### Screenshot 3b
 ![](screenshots/3B.png)
 
 ---
 
 ## Phase 4 — Commits and History
 
-### Screenshot 4A
+### Screenshot 4a
 `./pes log` showing three commits.
 
 ![](screenshots/4A.png)
 
-### Screenshot 4B
+### Screenshot 4b
 `find .pes -type f | sort` showing object store growth after three commits.
 
 ![](screenshots/4B.png)
 
-### Screenshot 4C
+### Screenshot 4c
 `cat .pes/refs/heads/main` and `cat .pes/HEAD` showing the reference chain.
 
 ![](screenshots/4C.png)
@@ -58,11 +58,14 @@
 
 ## Final Test
 
-### Integration Test Output
+### Final Test — Part 1
 ![](screenshots/final1.png)
 
-### Additional Final Evidence
+### Final Test — Part 2
 ![](screenshots/final2.png)
+
+### Final Test — Part 3
+![](screenshots/final3.png)
 
 ---
 
