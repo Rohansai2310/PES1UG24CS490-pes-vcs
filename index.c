@@ -145,8 +145,12 @@ int index_load(Index *index)
     if (!fp)
         return 0;   // index missing is valid
 
-    for (;;)
+    char line[1024];
+    while (fgets(line, sizeof(line), fp) != NULL)
     {
+        if (line[0] == '\n' || line[0] == '\r' || line[0] == '\0')
+            continue;
+
         if (index->count >= MAX_INDEX_ENTRIES) {
             fclose(fp);
             return -1;
@@ -155,16 +159,13 @@ int index_load(Index *index)
         IndexEntry *e = &index->entries[index->count];
         char hash_hex[HASH_HEX_SIZE + 1];
 
-        int n = fscanf(fp,
+        int n = sscanf(line,
                        "%o %64s %" SCNu64 " %u %511s",
                        &e->mode,
                        hash_hex,
                        &e->mtime_sec,
                        &e->size,
                        e->path);
-
-        if (n == EOF)
-            break;
 
         if (n != 5) {
             fclose(fp);
