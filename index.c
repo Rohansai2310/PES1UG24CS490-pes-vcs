@@ -102,6 +102,12 @@ int index_status(const Index *index) {
             if (strcmp(ent->d_name, ".pes") == 0) continue;
             if (strcmp(ent->d_name, "pes") == 0) continue; // compiled executable
             if (strstr(ent->d_name, ".o") != NULL) continue; // object files
+    static int compare_names(const void *a, const void *b)
+    {
+        const char *const *sa = (const char *const *)a;
+        const char *const *sb = (const char *const *)b;
+        return strcmp(*sa, *sb);
+    }
 
             // Check if file is tracked in the index
             int is_tracked = 0;
@@ -160,13 +166,21 @@ int index_load(Index *index)
         IndexEntry *e = &index->entries[index->count];
         char hash_hex[HASH_HEX_SIZE + 1];
 
-        int n = sscanf(line,
-                       "%o %64s %" SCNu64 " %u %511s",
-                       &e->mode,
-                       hash_hex,
-                       &e->mtime_sec,
+                    if (stat(ent->d_name, &st) == 0 && S_ISREG(st.st_mode)) {
+                        if (untracked_total < (int)(sizeof(untracked) / sizeof(untracked[0]))) {
+                            untracked[untracked_total] = strdup(ent->d_name);
+                            if (untracked[untracked_total])
+                                untracked_total++;
+                        }
+                    }
                        &e->size,
                        e->path);
+            qsort(untracked, (size_t)untracked_total, sizeof(char *), compare_names);
+            for (int i = 0; i < untracked_total; i++) {
+                printf("  untracked:  %s\n", untracked[i]);
+                free(untracked[i]);
+                untracked_count++;
+            }
 
         if (n != 5) {
             fclose(fp);
