@@ -28,6 +28,25 @@
 
 extern int object_write(ObjectType type,const void *data,size_t len,ObjectID *id_out);
 
+static uint32_t mode_from_stat(const struct stat *st)
+{
+    return (st->st_mode & S_IXUSR) ? 0100755 : 0100644;
+}
+
+static void fill_index_entry(IndexEntry *e,
+                             const char *path,
+                             uint32_t mode,
+                             const ObjectID *hash,
+                             const struct stat *st,
+                             uint32_t size)
+{
+    e->mode = mode;
+    e->hash = *hash;
+    e->mtime_sec = (uint64_t)st->st_mtime;
+    e->size = size;
+    snprintf(e->path, sizeof(e->path), "%s", path);
+}
+
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
 // Find an index entry by path (linear scan).
@@ -360,21 +379,13 @@ int index_add(Index *index, const char *path)
 
     free(data);
 
-    if (S_ISDIR(st.st_mode))
-        mode = 040000;
-    else if (st.st_mode & S_IXUSR)
-        mode = 0100755;
-    else
-        mode = 0100644;
+    mode = mode_from_stat(&st);
 
     IndexEntry *existing = index_find(index, path);
 
     if (existing)
     {
-        existing->mode = mode;
-        existing->hash = hash;
-        existing->mtime_sec = st.st_mtime;
-        existing->size = size;
+        fill_index_entry(existing, path, mode, &hash, &st, size);
     }
     else
     {
@@ -382,14 +393,7 @@ int index_add(Index *index, const char *path)
             return -1;
 
         IndexEntry *e = &index->entries[index->count];
-
-        e->mode = mode;
-        e->hash = hash;
-        e->mtime_sec = st.st_mtime;
-        e->size = size;
-
-        strncpy(e->path, path, sizeof(e->path) - 1);
-        e->path[sizeof(e->path) - 1] = '\0';
+        fill_index_entry(e, path, mode, &hash, &st, size);
 
         index->count++;
     }
