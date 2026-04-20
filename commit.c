@@ -186,8 +186,11 @@ int head_update(const ObjectID *new_commit) {
     hash_to_hex(new_commit, hex);
     fprintf(f, "%s\n", hex);
     
-    fflush(f);
-    fsync(fileno(f));
+    if (fflush(f) != 0 || fsync(fileno(f)) != 0) {
+        fclose(f);
+        unlink(tmp_path);
+        return -1;
+    }
     fclose(f);
     
     return rename(tmp_path, target_path);
