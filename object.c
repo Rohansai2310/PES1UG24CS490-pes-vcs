@@ -254,7 +254,7 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     char type_str[10];
     size_t size;
 
-    if (sscanf((char *)buffer, "%s %zu", type_str, &size) != 2) {
+    if (sscanf((char *)buffer, "%9s %zu", type_str, &size) != 2) {
         free(buffer);
         return -1;
     }
@@ -271,6 +271,11 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     }
 
     unsigned char *data_start = (unsigned char *)(null_pos + 1);
+    size_t payload_len = (size_t)(buffer + file_size - data_start);
+    if (payload_len != size) {
+        free(buffer);
+        return -1;
+    }
 
     *data_out = malloc(size);
     if (!*data_out) {
