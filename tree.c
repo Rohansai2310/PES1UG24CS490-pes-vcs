@@ -167,7 +167,8 @@ static int build_tree_level(TempEntry *entries, int count, const char *prefix, O
         TreeEntry *t = &tree.entries[tree.count++];
 
         t->mode = entries[i].mode;
-        strcpy(t->name, name);
+        strncpy(t->name, name, sizeof(t->name) - 1);
+        t->name[sizeof(t->name) - 1] = '\0';
         t->hash = entries[i].hash;
     }
     for (int i = 0; i < count; i++) {
@@ -179,18 +180,23 @@ static int build_tree_level(TempEntry *entries, int count, const char *prefix, O
 
         const char *name = prefix ? rel + strlen(prefix) : rel;
 
-        char *slash = strchr(name, '/');
+        const char *slash = strchr(name, '/');
         if (!slash)
             continue;
 
         char dirname[256];
-        strncpy(dirname, name, slash - name);
-        dirname[slash - name] = '\0';
+        size_t dirname_len = (size_t)(slash - name);
+        if (dirname_len == 0 || dirname_len >= sizeof(dirname))
+            return -1;
+        strncpy(dirname, name, dirname_len);
+        dirname[dirname_len] = '\0';
 
         int exists = 0;
-        for (int j = 0; j < tree.count; j++)
+        for (int j = 0; j < tree.count; j++) {
             if (strcmp(tree.entries[j].name, dirname) == 0)
                 exists = 1;
+            if (exists) break;
+        }
 
         if (exists)
             continue;
@@ -218,7 +224,8 @@ new_prefix[sizeof(new_prefix) - 1] = '\0';
         TreeEntry *t = &tree.entries[tree.count++];
 
         t->mode = MODE_DIR;
-        strcpy(t->name, dirname);
+        strncpy(t->name, dirname, sizeof(t->name) - 1);
+        t->name[sizeof(t->name) - 1] = '\0';
         t->hash = sub_id;
     }
     void *data;
