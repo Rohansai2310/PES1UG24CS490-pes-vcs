@@ -1,0 +1,25 @@
+# Compiled binaries
+pes
+test_objects
+test_tree
+
+# Object files
+*.o
+*.obsidian
+
+# PES repository (created during testing)
+.pes/
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+file1.txt
+file2.txt
+run_tree
+run_tree.c
+src/
+t-integration
