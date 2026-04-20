@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <inttypes.h>
+#include <limits.h>
 
 extern int object_write(ObjectType type,const void *data,size_t len,ObjectID *id_out);
 
@@ -297,24 +298,37 @@ int index_add(Index *index, const char *path)
     if (stat(path, &st) != 0)
         return -1;
 
+    if (!S_ISREG(st.st_mode))
+        return -1;
+
     uint32_t mode;
 
     FILE *fp = fopen(path, "rb");
     if (!fp)
         return -1;
 
-    fseek(fp, 0, SEEK_END);
-    uint32_t size = (uint32_t)ftell(fp);
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return -1;
+    }
+
+    long file_len = ftell(fp);
+    if (file_len < 0 || (unsigned long)file_len > UINT32_MAX) {
+        fclose(fp);
+        return -1;
+    }
+
+    uint32_t size = (uint32_t)file_len;
     rewind(fp);
 
-    void *data = malloc(size);
+    void *data = malloc(size > 0 ? size : 1);
     if (!data)
     {
         fclose(fp);
         return -1;
     }
 
-    if (fread(data, 1, size, fp) != size)
+    if (size > 0 && fread(data, 1, size, fp) != size)
     {
         free(data);
         fclose(fp);
