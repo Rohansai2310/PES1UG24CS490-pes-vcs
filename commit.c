@@ -29,6 +29,15 @@
 int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
 int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_t *len_out);
 
+static int try_read_head_parent(ObjectID *parent_out, int *has_parent_out) {
+    if (head_read(parent_out) == 0) {
+        *has_parent_out = 1;
+        return 0;
+    }
+    *has_parent_out = 0;
+    return 0;
+}
+
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
 // Parse raw commit data into a Commit struct.
@@ -207,17 +216,8 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
 
     commit.tree = tree_id;
 
-    ObjectID parent;
-
-    if (head_read(&parent) == 0)
-    {
-        commit.parent = parent;
-        commit.has_parent = 1;
-    }
-    else
-    {
-        commit.has_parent = 0;
-    }
+    if (try_read_head_parent(&commit.parent, &commit.has_parent) != 0)
+        return -1;
 
     snprintf(commit.author,sizeof(commit.author),"%s", pes_author());
 
