@@ -91,9 +91,15 @@ static int compare_tree_entries(const void *a, const void *b) {
 // Caller must free(*data_out).
 // Returns 0 on success, -1 on error.
 int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
-    // Estimate max size: (6 bytes mode + 1 byte space + 256 bytes name + 1 byte null + 32 bytes hash) per entry
-    size_t max_size = tree->count * 296; 
-    uint8_t *buffer = malloc(max_size);
+    if (!data_out || !len_out) return -1;
+
+    size_t exact_size = 0;
+    for (int i = 0; i < tree->count; i++) {
+        // up to 8 octal chars for mode + space + name + null + binary hash
+        exact_size += 8 + 1 + strlen(tree->entries[i].name) + 1 + HASH_SIZE;
+    }
+
+    uint8_t *buffer = malloc(exact_size > 0 ? exact_size : 1);
     if (!buffer) return -1;
 
     // Create a mutable copy to sort entries (Git requirement)
@@ -105,7 +111,15 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
         const TreeEntry *entry = &sorted_tree.entries[i];
         
         // Write mode and name (%o writes octal correctly for Git standards)
-        int written = sprintf((char *)buffer + offset, "%o %s", entry->mode, entry->name);
+        int written = snprintf((char *)buffer + offset,
+                               exact_size - offset,
+                               "%o %s",
+                               entry->mode,
+                               entry->name);
+        if (written < 0 || (size_t)written >= exact_size - offset) {
+            free(buffer);
+            return -1;
+        }
         offset += written + 1; // +1 to step over the null terminator written by sprintf
         
         // Write binary hash
