@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 #include <openssl/evp.h>
 
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
@@ -67,6 +68,20 @@ static const char *object_type_name(ObjectType type) {
         case OBJ_COMMIT: return "commit";
         default: return NULL;
     }
+}
+
+static int write_full(int fd, const unsigned char *buf, size_t len) {
+    size_t off = 0;
+    while (off < len) {
+        ssize_t n = write(fd, buf + off, len - off);
+        if (n < 0) {
+            if (errno == EINTR) continue;
+            return -1;
+        }
+        if (n == 0) return -1;
+        off += (size_t)n;
+    }
+    return 0;
 }
 
 // ─── TODO: Implement these ──────────────────────────────────────────────────
@@ -142,7 +157,7 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
         free(full_object);
         return -1;
     }
-    if (write(fd, full_object, total_len) != (ssize_t)total_len) {
+    if (write_full(fd, full_object, total_len) != 0) {
         close(fd);
         free(full_object);
         return -1;
