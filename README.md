@@ -11,10 +11,10 @@
 
 
 ### Screenshot 1a
-![](screenshots/Screenshot from 2026-04-20 15-12-03.png)
+![Screenshot 1a](screenshots/Screenshot from 2026-04-20 15-12-03.png)
 
 ### Screenshot 1b
-![](screenshots/Screenshot from 2026-04-20 15-12-47.png)
+![Screenshot 1b](screenshots/Screenshot from 2026-04-20 15-12-47.png)
 
 ---
 
@@ -22,10 +22,10 @@
 
 
 ### Screenshot 2a
-![](screenshots/Screenshot from 2026-04-20 15-19-48.png)
+![Screenshot 2a](screenshots/Screenshot from 2026-04-20 15-19-48.png)
 
 ### Screenshot 2b
-![](screenshots/Screenshot from 2026-04-20 15-28-24.png)
+![Screenshot 2b](screenshots/Screenshot from 2026-04-20 15-28-24.png)
 
 ---
 
@@ -33,10 +33,10 @@
 
 
 ### Screenshot 3a
-![](screenshots/Screenshot from 2026-04-20 15-29-23.png)
+![Screenshot 3a](screenshots/Screenshot from 2026-04-20 15-29-23.png)
 
 ### Screenshot 3b
-![](screenshots/Screenshot from 2026-04-20 15-37-24.png)
+![Screenshot 3b](screenshots/Screenshot from 2026-04-20 15-37-24.png)
 
 ---
 
@@ -45,11 +45,11 @@
 
 ### Screenshot 4a
 `./pes log` showing three commits.
-![](screenshots/Screenshot from 2026-04-20 15-39-46.png)
+![Screenshot 4a](screenshots/Screenshot from 2026-04-20 15-39-46.png)
 
 ### Screenshot 4b
 `find .pes -type f | sort` showing object store growth after three commits.
-![](screenshots/Screenshot from 2026-04-20 15-42-23.png)
+![Screenshot 4b](screenshots/Screenshot from 2026-04-20 15-42-23.png)
 
 ### Screenshot 4c
 `cat .pes/refs/heads/main` and `cat .pes/HEAD` showing the reference chain.
