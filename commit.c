@@ -38,6 +38,11 @@ static int try_read_head_parent(ObjectID *parent_out, int *has_parent_out) {
     return 0;
 }
 
+static void fill_commit_identity(Commit *commit) {
+    snprintf(commit->author, sizeof(commit->author), "%s", pes_author());
+    commit->timestamp = (uint64_t)time(NULL);
+}
+
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
 // Parse raw commit data into a Commit struct.
@@ -219,9 +224,7 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
     if (try_read_head_parent(&commit.parent, &commit.has_parent) != 0)
         return -1;
 
-    snprintf(commit.author,sizeof(commit.author),"%s", pes_author());
-
-    commit.timestamp = (uint64_t)time(NULL);
+    fill_commit_identity(&commit);
 
     snprintf(commit.message, sizeof(commit.message), "%s",message);
 
