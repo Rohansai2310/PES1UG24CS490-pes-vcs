@@ -201,6 +201,16 @@ static int compare_entries(const void *a, const void *b)
     return strcmp(ea->path, eb->path);
 }
 
+static int fsync_index_dir(void)
+{
+    int dir_fd = open(PES_DIR, O_RDONLY);
+    if (dir_fd < 0)
+        return -1;
+    int rc = fsync(dir_fd);
+    close(dir_fd);
+    return rc;
+}
+
 int index_save(const Index *index)
 {
     char tmp_path[256];
@@ -259,6 +269,11 @@ int index_save(const Index *index)
     if (rename(tmp_path, INDEX_FILE) != 0) {
         free(sorted);
         unlink(tmp_path);
+        return -1;
+    }
+
+    if (fsync_index_dir() != 0) {
+        free(sorted);
         return -1;
     }
 
