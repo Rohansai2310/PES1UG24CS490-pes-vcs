@@ -155,6 +155,9 @@ static int build_tree_level(TempEntry *entries, int count, const char *prefix, O
         if (strchr(name, '/') != NULL)
             continue;
 
+        if (tree.count >= MAX_TREE_ENTRIES)
+            return -1;
+
         TreeEntry *t = &tree.entries[tree.count++];
 
         t->mode = entries[i].mode;
@@ -201,6 +204,9 @@ new_prefix[sizeof(new_prefix) - 1] = '\0';
         if (build_tree_level(entries, count,
                             new_prefix,
                             &sub_id) != 0)
+            return -1;
+
+        if (tree.count >= MAX_TREE_ENTRIES)
             return -1;
 
         TreeEntry *t = &tree.entries[tree.count++];
