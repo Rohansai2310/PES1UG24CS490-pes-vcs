@@ -148,7 +148,10 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     }
     *slash = '\0';
 
-    mkdir(dir, 0755);
+    if (mkdir(dir, 0755) != 0 && errno != EEXIST) {
+        free(full_object);
+        return -1;
+    }
     char temp_path[600];
     snprintf(temp_path, sizeof(temp_path), "%s.tmp", path);
 
@@ -159,12 +162,19 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     }
     if (write_full(fd, full_object, total_len) != 0) {
         close(fd);
+        unlink(temp_path);
         free(full_object);
         return -1;
     }
-    fsync(fd);
+    if (fsync(fd) != 0) {
+        close(fd);
+        unlink(temp_path);
+        free(full_object);
+        return -1;
+    }
     close(fd);
     if (rename(temp_path, path) != 0) {
+        unlink(temp_path);
         free(full_object);
         return -1;
     }
