@@ -231,29 +231,18 @@ new_prefix[sizeof(new_prefix) - 1] = '\0';
 }
 
 int tree_from_index(ObjectID *id_out) {
-    FILE *fp = fopen(".pes/index", "r");
-    if (!fp) return -1;
+    Index index;
+    if (index_load(&index) != 0)
+        return -1;
 
-    TempEntry entries[256];
-    int count = 0;
-
-    while (!feof(fp)) {
-        char hash_hex[HASH_HEX_SIZE + 1];
-        long mtime;
-        size_t size;
-
-        if (fscanf(fp, "%o %64s %ld %zu %255s\n",
-                &entries[count].mode,
-                hash_hex,
-                &mtime,
-                &size,
-                entries[count].path) == 5) {
-
-            hex_to_hash(hash_hex, &entries[count].hash);
-            count++;
-        }
+    TempEntry entries[MAX_INDEX_ENTRIES];
+    int count = index.count;
+    for (int i = 0; i < count; i++) {
+        entries[i].mode = index.entries[i].mode;
+        entries[i].hash = index.entries[i].hash;
+        strncpy(entries[i].path, index.entries[i].path, sizeof(entries[i].path) - 1);
+        entries[i].path[sizeof(entries[i].path) - 1] = '\0';
     }
 
-    fclose(fp);
     return build_tree_level(entries, count, NULL, id_out);
 }
