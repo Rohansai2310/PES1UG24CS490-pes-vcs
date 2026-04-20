@@ -47,6 +47,13 @@ static void fill_index_entry(IndexEntry *e,
     snprintf(e->path, sizeof(e->path), "%s", path);
 }
 
+static int compare_names(const void *a, const void *b)
+{
+    const char *const *sa = (const char *const *)a;
+    const char *const *sb = (const char *const *)b;
+    return strcmp(*sa, *sb);
+}
+
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
 // Find an index entry by path (linear scan).
@@ -114,6 +121,8 @@ int index_status(const Index *index) {
     int untracked_count = 0;
     DIR *dir = opendir(".");
     if (dir) {
+        char *untracked[1024];
+        int untracked_total = 0;
         struct dirent *ent;
         while ((ent = readdir(dir)) != NULL) {
             // Skip hidden directories, parent directories, and build artifacts
@@ -121,12 +130,6 @@ int index_status(const Index *index) {
             if (strcmp(ent->d_name, ".pes") == 0) continue;
             if (strcmp(ent->d_name, "pes") == 0) continue; // compiled executable
             if (strstr(ent->d_name, ".o") != NULL) continue; // object files
-    static int compare_names(const void *a, const void *b)
-    {
-        const char *const *sa = (const char *const *)a;
-        const char *const *sb = (const char *const *)b;
-        return strcmp(*sa, *sb);
-    }
 
             // Check if file is tracked in the index
             int is_tracked = 0;
@@ -139,12 +142,20 @@ int index_status(const Index *index) {
             
             if (!is_tracked) {
                 struct stat st;
-                stat(ent->d_name, &st);
-                if (S_ISREG(st.st_mode)) { // Only list regular files for simplicity
-                    printf("  untracked:  %s\n", ent->d_name);
-                    untracked_count++;
+                if (stat(ent->d_name, &st) == 0 && S_ISREG(st.st_mode)) {
+                    if (untracked_total < (int)(sizeof(untracked) / sizeof(untracked[0]))) {
+                        untracked[untracked_total] = strdup(ent->d_name);
+                        if (untracked[untracked_total])
+                            untracked_total++;
+                    }
                 }
             }
+        }
+        qsort(untracked, (size_t)untracked_total, sizeof(char *), compare_names);
+        for (int i = 0; i < untracked_total; i++) {
+            printf("  untracked:  %s\n", untracked[i]);
+            free(untracked[i]);
+            untracked_count++;
         }
         closedir(dir);
     }
@@ -172,8 +183,7 @@ int index_load(Index *index)
         return 0;   // index missing is valid
 
     char line[1024];
-    while (fgets(line, sizeof(line), fp) != NULL)
-    {
+    while (fgets(line, sizeof(line), fp) != NULL) {
         if (line[0] == '\n' || line[0] == '\r' || line[0] == '\0')
             continue;
 
@@ -185,21 +195,13 @@ int index_load(Index *index)
         IndexEntry *e = &index->entries[index->count];
         char hash_hex[HASH_HEX_SIZE + 1];
 
-                    if (stat(ent->d_name, &st) == 0 && S_ISREG(st.st_mode)) {
-                        if (untracked_total < (int)(sizeof(untracked) / sizeof(untracked[0]))) {
-                            untracked[untracked_total] = strdup(ent->d_name);
-                            if (untracked[untracked_total])
-                                untracked_total++;
-                        }
-                    }
+        int n = sscanf(line,
+                       "%o %64s %" SCNu64 " %u %511s",
+                       &e->mode,
+                       hash_hex,
+                       &e->mtime_sec,
                        &e->size,
                        e->path);
-            qsort(untracked, (size_t)untracked_total, sizeof(char *), compare_names);
-            for (int i = 0; i < untracked_total; i++) {
-                printf("  untracked:  %s\n", untracked[i]);
-                free(untracked[i]);
-                untracked_count++;
-            }
 
         if (n != 5) {
             fclose(fp);
