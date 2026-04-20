@@ -9,45 +9,47 @@
 
 ## Phase 1 — Object Storage
 
+
 ### Screenshot 1a
-![](screenshots/1A.png)
+![](screenshots/Screenshot from 2026-04-20 15-12-03.png)
 
 ### Screenshot 1b
-![](screenshots/1B.png)
+![](screenshots/Screenshot from 2026-04-20 15-12-47.png)
 
 ---
 
 ## Phase 2 — Tree Objects
 
+
 ### Screenshot 2a
-![](screenshots/2A.png)
+![](screenshots/Screenshot from 2026-04-20 15-19-48.png)
 
 ### Screenshot 2b
-![](screenshots/2B.png)
+![](screenshots/Screenshot from 2026-04-20 15-28-24.png)
 
 ---
 
 ## Phase 3 — Index / Staging Area
 
+
 ### Screenshot 3a
-![](screenshots/3A.png)
+![](screenshots/Screenshot from 2026-04-20 15-29-23.png)
 
 ### Screenshot 3b
-![](screenshots/3B.png)
+![](screenshots/Screenshot from 2026-04-20 15-37-24.png)
 
 ---
 
 ## Phase 4 — Commits and History
 
+
 ### Screenshot 4a
 `./pes log` showing three commits.
-
-![](screenshots/4A.png)
+![](screenshots/Screenshot from 2026-04-20 15-39-46.png)
 
 ### Screenshot 4b
 `find .pes -type f | sort` showing object store growth after three commits.
-
-![](screenshots/4B.png)
+![](screenshots/Screenshot from 2026-04-20 15-42-23.png)
 
 ### Screenshot 4c
 `cat .pes/refs/heads/main` and `cat .pes/HEAD` showing the reference chain.
