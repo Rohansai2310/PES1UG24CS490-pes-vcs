@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <limits.h>
 #include <openssl/evp.h>
 
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
@@ -220,6 +221,11 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     fseek(fp, 0, SEEK_END);
     long file_size = ftell(fp);
     rewind(fp);
+
+    if (file_size <= 0 || (unsigned long)file_size > SIZE_MAX) {
+        fclose(fp);
+        return -1;
+    }
 
     unsigned char *buffer = malloc(file_size);
     if (!buffer) {
