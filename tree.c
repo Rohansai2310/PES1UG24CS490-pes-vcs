@@ -139,6 +139,12 @@ typedef struct {
     char path[256];
 } TempEntry;
 
+static int path_under_prefix(const char *path, const char *prefix) {
+    if (!prefix) return 1;
+    size_t prefix_len = strlen(prefix);
+    return strncmp(path, prefix, prefix_len) == 0;
+}
+
 static int build_tree_level(TempEntry *entries, int count, const char *prefix, ObjectID *id_out)
 {
     Tree tree;
@@ -147,7 +153,7 @@ static int build_tree_level(TempEntry *entries, int count, const char *prefix, O
 
         const char *rel = entries[i].path;
 
-        if (prefix && strncmp(rel, prefix, strlen(prefix)) != 0)
+        if (!path_under_prefix(rel, prefix))
             continue;
 
         const char *name = prefix ? rel + strlen(prefix) : rel;
@@ -168,7 +174,7 @@ static int build_tree_level(TempEntry *entries, int count, const char *prefix, O
 
         const char *rel = entries[i].path;
 
-        if (prefix && strncmp(rel, prefix, strlen(prefix)) != 0)
+        if (!path_under_prefix(rel, prefix))
             continue;
 
         const char *name = prefix ? rel + strlen(prefix) : rel;
