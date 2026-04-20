@@ -17,6 +17,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <inttypes.h>
 
 extern int object_write(ObjectType type,const void *data,size_t len,ObjectID *id_out);
 
@@ -159,6 +160,37 @@ static int path_under_prefix(const char *path, const char *prefix) {
     return strncmp(path, prefix, prefix_len) == 0;
 }
 
+static int load_temp_entries_from_index(TempEntry *entries, int *count_out) {
+    FILE *fp = fopen(INDEX_FILE, "r");
+    if (!fp) {
+        *count_out = 0;
+        return 0;
+    }
+
+    int count = 0;
+    while (count < MAX_INDEX_ENTRIES) {
+        char hash_hex[HASH_HEX_SIZE + 1];
+        uint64_t mtime;
+        uint32_t size;
+        int rc = fscanf(fp, "%o %64s %" SCNu64 " %u %255s",
+                        &entries[count].mode,
+                        hash_hex,
+                        &mtime,
+                        &size,
+                        entries[count].path);
+        if (rc == EOF) break;
+        if (rc != 5 || hex_to_hash(hash_hex, &entries[count].hash) != 0) {
+            fclose(fp);
+            return -1;
+        }
+        count++;
+    }
+
+    fclose(fp);
+    *count_out = count;
+    return 0;
+}
+
 static int build_tree_level(TempEntry *entries, int count, const char *prefix, ObjectID *id_out)
 {
     Tree tree;
@@ -181,8 +213,8 @@ static int build_tree_level(TempEntry *entries, int count, const char *prefix, O
         TreeEntry *t = &tree.entries[tree.count++];
 
         t->mode = entries[i].mode;
-        strncpy(t->name, name, sizeof(t->name) - 1);
-        t->name[sizeof(t->name) - 1] = '\0';
+        if (snprintf(t->name, sizeof(t->name), "%s", name) >= (int)sizeof(t->name))
+            return -1;
         t->hash = entries[i].hash;
     }
     for (int i = 0; i < count; i++) {
@@ -238,8 +270,8 @@ new_prefix[sizeof(new_prefix) - 1] = '\0';
         TreeEntry *t = &tree.entries[tree.count++];
 
         t->mode = MODE_DIR;
-        strncpy(t->name, dirname, sizeof(t->name) - 1);
-        t->name[sizeof(t->name) - 1] = '\0';
+        if (snprintf(t->name, sizeof(t->name), "%s", dirname) >= (int)sizeof(t->name))
+            return -1;
         t->hash = sub_id;
     }
     void *data;
@@ -258,18 +290,10 @@ new_prefix[sizeof(new_prefix) - 1] = '\0';
 }
 
 int tree_from_index(ObjectID *id_out) {
-    Index index;
-    if (index_load(&index) != 0)
-        return -1;
-
     TempEntry entries[MAX_INDEX_ENTRIES];
-    int count = index.count;
-    for (int i = 0; i < count; i++) {
-        entries[i].mode = index.entries[i].mode;
-        entries[i].hash = index.entries[i].hash;
-        strncpy(entries[i].path, index.entries[i].path, sizeof(entries[i].path) - 1);
-        entries[i].path[sizeof(entries[i].path) - 1] = '\0';
-    }
+    int count = 0;
+    if (load_temp_entries_from_index(entries, &count) != 0)
+        return -1;
 
     return build_tree_level(entries, count, NULL, id_out);
 }
